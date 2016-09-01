@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+	<title>Html5 Canvas 实现图片合成</title>
+</head>
+<body>
+<img src="" alt="" width="320px" style="vertical-align: top;" id="mybox">
+<div id="qrcode" style="position:absolute;top:-9999px;"></div>
+<script type="text/javascript" src="qrcode.js"></script>
+<script type="text/javascript" src="http://js.3conline.com/min2/temp/v2/lib-zepto.js"></script>
+<script type="text/javascript">
+//http://www1.pclady.com.cn/wap/zt/gz20160901/mdgirl/index.html
+
+
+
+
+//重置起码二维码的方法
+// qrcode.makeCode('new content');
+
+
+
+
+
+
+
+var data={
+	"name":"强强咚咚咚强强",
+	"shopname":"baby花",
+	"image":[
+		"1.png",
+		"2.jpg",
+		"3.jpg"
+	]
+	},imgPath;
+
+function draw(src,callback){
+	var mycanvas=document.createElement('canvas');
+	mycanvas.style.cssText = ";position:absolute;top:-9999px;"
+	document.body.appendChild(mycanvas);	
+	data.image.push(src);
+	var len=data.image.length;
+	mycanvas.width=640;
+	mycanvas.height=1000;
+	if(mycanvas.getContext){
+		var context=mycanvas.getContext('2d');
+		// context.fillStyle='#fff';
+		// context.fillRect(0,0,mycanvas.width,mycanvas.height);
+		// context.fillStyle='#f8f8f8';
+		// context.fillRect(0,0,mycanvas.width,140);
+		// context.fillStyle='#fff';
+		// context.strokeStyle='#dfdfdf';
+		// context.roundRect(150,20,470,100,6);
+		// context.fill();
+		// context.stroke();
+		// context.beginPath();
+		// context.moveTo(151,40);
+		// context.lineTo(140,48);
+		// context.lineTo(151,56);
+		// context.fill();
+		// context.stroke();
+		// 顶部文字
+		context.font='28px 宋体';
+		context.fillStyle='#333';
+		context.fillText('我是',170,60);
+		context.fillStyle='#f5c158';
+		context.fillText(data.name,230,60);
+		context.fillStyle='#333';
+		context.fillText(',',235 + context.measureText(data.name).width,60);
+		context.fillStyle='#333';
+		context.fillText('我为',170,100);
+		context.fillStyle='#f5c158';
+		context.fillText(data.shopname,230,100);
+
+		context.fillStyle='#333';
+		context.fillText('代言。',235 + context.measureText(data.shopname).width,100);
+
+		// 宣传图片
+		var h=0;
+		function drawing(num){
+			if(num<len){
+				var img=new Image;
+				img.src=data.image[num];
+				if(num==0){
+					img.onerror=function(){
+						context.fillStyle='#fff';
+						context.stokeStyle='#dfdfdf';
+						context.fillRect(20,20,100,100);
+						context.strokeRect(20,20,100,100);
+						context.font='24px 微软雅黑';
+						context.textAlign='center';
+						context.textBaseline='middle';
+						context.fillStyle='#333';
+						context.fillText('LOGO',70,70);
+						drawing(num+1);
+					}
+					img.onload=function(){
+						context.drawImage(img,20,20,100,100);
+						drawing(num+1);
+					}
+				}else if(num==1){
+					img.onerror=function(){
+						h=140;
+						drawing(num+1);
+					}
+					img.onload=function(){
+						context.drawImage(img,0,140,mycanvas.width,1000);
+						h=440;
+						drawing(num+1);
+					}
+				}else if(num==2){
+					img.onload=function(){
+						context.drawImage(img,55,h+20,240,240);
+						drawing(num+1);
+					}
+				}
+				else if(num==3){
+					img.onload=function(){
+						context.drawImage(img,345,h+20,240,240);
+						// 底部内容
+						context.font='bold 28px 宋体';
+						context.fillStyle='#C13E2C';
+						context.textAlign='center';
+						context.fillText('长按指纹 识别图中二维码 推广',mycanvas.width/2,h+300);
+						context.font='bold 24px 宋体';
+						context.fillStyle='#666';
+						context.textAlign='center';
+						context.fillText('关注我们 加入有礼品 推广有惊喜',mycanvas.width/2,h+330);
+						drawing(num+1);
+					}
+				}				
+			}else{
+				imgPath=mycanvas.toDataURL("image/png");
+				document.getElementsByTagName('img')[0].src=imgPath;
+				document.body.removeChild(mycanvas);
+				callback && callback.call(this,imgPath)
+
+			}
+		}
+		drawing(0);
+	}
+}
+
+
+var qrcode = new QRCode('qrcode', {
+  text: 'http://www1.pclady.com.cn/wap/zt/gz20160318/prettygirl/index.html?userID=0519',
+  width: 256,
+  height: 256,
+  colorDark : '#000000',
+  colorLight : '#ffffff',
+  correctLevel : QRCode.CorrectLevel.H,
+  success:function(a){
+  	setTimeout(function(){
+  		// console.log(a._base64Src); //获取到当前二维码的base64编码
+  		draw(a._base64Src,function(src){
+  			// console.log(src);
+  			$.post("http://upc.pclady.com.cn/upload_quick_base64.jsp?referer=http://play10.pclady.com.cn/",{
+  				application:'play',
+  				readExif:'yes',
+  				keepSrc:'yes',
+  				data : src
+  			},function(data){
+  				if(data.retCode<1){
+  					$("#mybox").attr("src",data.files[0].url)
+  				}
+  			},"json")
+  		});
+  	}, 200)
+  }
+});
+</script>
+</body>
+</html>
